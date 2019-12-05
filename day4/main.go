@@ -19,11 +19,11 @@ func main() {
 }
 
 func puzzle1() {
-	countNumbers()
+	countNumbers(isWithinRange, hasAdjacentDigits, hasMonotoneDigits)
 }
 
 func puzzle2() {
-
+	countNumbers(isWithinRange, hasExactly2AdjacentDigits, hasMonotoneDigits)
 }
 
 func countNumbers(validators ...requirement) {
@@ -52,12 +52,8 @@ type requirement func(num int, digits []uint8) bool
 func validate(num int, solution chan<- int, wg *sync.WaitGroup, validators ...requirement) {
 	defer wg.Done()
 	var (
-		digits         = getDigits(num)
-		satisfied      = true
-		withinRange    = isWithinRange(num, digits)
-		adjacentDigits = hasAdjacentDigits(num, digits)
-		monotoneDigits = hasMonotoneDigits(num, digits)
-		satisfied      = withinRange && adjacentDigits && monotoneDigits
+		digits    = getDigits(num)
+		satisfied = true
 	)
 
 	for _, v := range validators {
@@ -76,6 +72,37 @@ func hasAdjacentDigits(_ int, digits []uint8) bool {
 		hasAdjacentDigits = hasAdjacentDigits || left == right
 	}
 	return hasAdjacentDigits
+}
+
+func hasExactly2AdjacentDigits(_ int, digits []uint8) bool {
+	for i := 1; i < len(digits); i++ {
+		two, three := digits[i-1], digits[i]
+
+		if two != three {
+			// Make sure they match
+			continue
+		} else if i == 1 {
+			// Only check above
+			four := digits[i+1]
+			if four == two {
+				continue
+			}
+		} else if i == len(digits)-1 {
+			// Only check below
+			one := digits[i-2]
+			if one == two {
+				continue
+			}
+		} else {
+			one, four := digits[i-2], digits[i+1]
+			if one == two || four == two {
+				continue
+			}
+		}
+
+		return true
+	}
+	return false
 }
 
 func hasMonotoneDigits(_ int, digits []uint8) bool {
